@@ -14,7 +14,7 @@
     <body>
         <!-- Responsive navbar-->
         <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-            <div class="container">
+            <div class="container px-5">
                 <a class="navbar-brand" href="#!">스쿼트 트레이너</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
                 <div class="collapse navbar-collapse" id="navbarSupportedContent">
@@ -22,66 +22,186 @@
                         <li class="nav-item"><a class="nav-link active" aria-current="page" href="#!">Home</a></li>
                         <li class="nav-item"><a class="nav-link" href="#!">About</a></li>
                         <li class="nav-item"><a class="nav-link" href="#!">Contact</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#!">Services</a></li>
                     </ul>
                 </div>
             </div>
         </nav>
-        <!-- Header - set the background image for the header in the line below-->
-        <header class="py-5 bg-image-full" style="background-image: url('https://source.unsplash.com/wfh8dDlNFOk/1600x900')">
-            <div class="text-center my-5">
-                <img class="img-fluid rounded-circle mb-4" src="https://dummyimage.com/150x150/6c757d/dee2e6.jpg" alt="..." />
-                <h1 class="text-white fs-3 fw-bolder">스쿼트 가이드</h1>
-				<iframe id="ytplayer" type="text/html" width="640" height="360"
+        <!-- Page Content-->
+        <div class="container px-4 px-lg-5">
+            <!-- Heading Row-->
+            <div class="row gx-4 gx-lg-5 align-items-center my-5">
+                <div class="col-lg-7"><iframe id="ytplayer" type="text/html" width="640" height="360"
   src="https://www.youtube.com/embed/Fk9j6pQ6ej8?autoplay=1&origin=http://example.com"
-  frameborder="0"></iframe>
-  <p class="text-white-50 mb-0">주의 사항</p>
-  <ul>
-		<li> 옆 모습이 모두 화면에 나오도록 적당히 떨어져서 스쿼드를 하세요 </li>
-		<li> 제대로 스쿼트를 해야지만 카운트가 올라갑니다. </li>
-	</ul>
+  frameborder="0"></iframe></div>
+                <div class="col-lg-5">
+                    <h1 class="font-weight-light">옆의 동영상을 보면서 따라해 보세요</h1>
+                    <p> 주의 사항!</p>
+					<li> 옆 모습이 화면에 나오도록 적당히 떨어져서 스쿼트를 하세요.</li>
+					<li> 제대로 스쿼트를 해야지만 카운트가 올라갑니다. </li>
+					<li> 여기에 스쿼트 자세 인식 기능 추가 - 이 줄을 추후에 기능 추가후 제거</li>
+                    <button type="button" onclick="init()">START!</button>
+                </div>
             </div>
-        </header>
-        <!-- Content section-->
-        <section class="py-5">
-            <div class="container my-5">
-                <div class="row justify-content-center">
-                    <div class="col-lg-6">
-                        <h2>왜 스쿼트 인가?</h2>
-                        <p class="lead">스쿼트는 웨이트 트레이닝의 3대 운동 중 하나이며 하체 운동의 알파이자 오메가이다.</p>
-                        <p class="mb-0">​​몸의 부위 중 등을 제외하면 허벅지가 가장 큰 근육을 가지고 있다. 그리고 몸의 노폐물을 가장 많이 태우고 칼로리 또한 가장 많이 태운다!
+			<div><canvas id="canvas"></canvas></div>
 
-​
+<div id="label-container"></div>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8/dist/teachablemachine-pose.min.js"></script>
+<script type="text/javascript">
+    // More API functions here:
+    // https://github.com/googlecreativelab/teachablemachine-community/tree/master/libraries/pose
 
-스쿼트는 제대로 하면 건강과 체력, 육체미를 모두 크게 향상시켜주는 좋은 운동이지만, 제대로 하지 않으면 무릎, 허리 등의 관절에 큰 손상을 입힐 수 있으며 평생 후유증이 남을 수도 있다. 평생 쓸 몸을 위해 안전하게 운동하도록 하자.
+    // the link to your model provided by Teachable Machine export panel
+    const URL = "./my_model/";
+    let model, webcam, ctx, labelContainer, maxPredictions;
 
-​
+    async function init() {
+        const modelURL = URL + "model.json";
+        const metadataURL = URL + "metadata.json";
 
-스쿼트는 분명히 프리웨이트 중에서 최고의 운동효과를 낼 수 있는 운동이다. 허나 최고의 프리웨이트 답게 생각보다 높은 난이도를 자랑하는 운동이다. 일선의 지도자들이나 트레이너들도 조금 더 깊이있게 들어가면 스쿼트에 관해서 쩔쩔매는 것이 사실이다. 또한 인터넷이나 책으로만 접하거나 제대로 된 교육을 받지 않은 많은 사람들이 잘못된 자세로 스쿼트를 시행하는 경우를 볼 수 있다. 잘못된 자세로 시행되는 스쿼트는 무릎-허리와 같은 회복불가능의 퇴행성 질환을 유발하며 어깨와 손목에도 심각한 부상을 유발하기도 한다. 정말 완벽히 정확한 자세로 시행할 자신이 없다면 차라리 스쿼트를 하지 않는 것이 더 좋다. 굳이 하겠다면, 먼저 맨몸으로 시작해서 빈봉 순으로 시작하자. 굳이 중량을 올리지 않아도 제대로 한다면 맨몸으로도 엄청난 자극이 올 것이다.</p>
+        // load the model and metadata
+        // Refer to tmImage.loadFromFiles() in the API to support files from a file picker
+        // Note: the pose library adds a tmPose object to your window (window.tmPose)
+        model = await tmPose.load(modelURL, metadataURL);
+        maxPredictions = model.getTotalClasses();
+
+        // Convenience function to setup a webcam
+        const size = 600;
+        const flip = true; // whether to flip the webcam
+        webcam = new tmPose.Webcam(size, size, flip); // width, height, flip
+        await webcam.setup(); // request access to the webcam
+        await webcam.play();
+        window.requestAnimationFrame(loop);
+
+        // append/get elements to the DOM
+        const canvas = document.getElementById("canvas");
+        canvas.width = size; canvas.height = size;
+        ctx = canvas.getContext("2d");
+        labelContainer = document.getElementById("label-container");
+        for (let i = 0; i < maxPredictions; i++) { // and class labels
+            labelContainer.appendChild(document.createElement("div"));
+        }
+    }
+
+    async function loop(timestamp) {
+        webcam.update(); // update the webcam frame
+        await predict();
+        window.requestAnimationFrame(loop);
+    }
+
+		var status = "std"
+		var count = 0
+
+    async function predict() {
+        // Prediction #1: run input through posenet
+        // estimatePose can take in an image, video or canvas html element
+        const { pose, posenetOutput } = await model.estimatePose(webcam.canvas);
+        // Prediction 2: run input through teachable machine classification model
+        const prediction = await model.predict(posenetOutput);
+
+				if(prediction[0].probability.toFixed(2) > 0.97) {
+					if(status == "sqd") {
+						count++
+						var audio = new Audio( count%10 + '.m4a');
+						audio.play();
+					}
+					status = "std"
+				} else if(prediction[1].probability.toFixed(2) >0.99) {
+					status = "sqd"
+				} else if(prediction[2].probability.toFixed(2) > 0.95) {
+					if(status =="std") {
+						var audio = new Audio( 111 + '.m4a');
+						audio.play();
+					}
+					status = "err1"
+				} else if(prediction[3].probability.toFixed(2) == 1.00) {
+					if(status =="std") {
+						var audio = new Audio( 222 + '.m4a');
+						audio.play();
+					}
+					status = "err2"
+
+				}
+
+        for (let i = 0; i < maxPredictions; i++) {
+            const classPrediction =
+                prediction[i].className + ": " + prediction[i].probability.toFixed(2);
+            labelContainer.childNodes[i].innerHTML = classPrediction;
+        }
+
+        // finally draw the poses
+        drawPose(pose);
+    }
+
+    function drawPose(pose) {
+        if (webcam.canvas) {
+            ctx.drawImage(webcam.canvas, 0, 0);
+            // draw the keypoints and skeleton
+            if (pose) {
+                const minPartConfidence = 0.5;
+                tmPose.drawKeypoints(pose.keypoints, minPartConfidence, ctx);
+                tmPose.drawSkeleton(pose.keypoints, minPartConfidence, ctx);
+            }
+        }
+    }
+</script>
+            <!-- Call to Action-->
+            <div class="card text-white bg-secondary my-5 py-4 text-center">
+                <div class="card-body"><h1 class="text-white m-0">왜 스쿼트 인가?</h1></div>
+            </div>
+            <!-- Content Row-->
+            <div class="row gx-4 gx-lg-5">
+                <div class="col-md-4 mb-5">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h2 class="card-title">3대 중량 운동 중 하나</h2>
+                            <p class="card-text">스쿼트는 벤치 프레스, 데드 리프트와 더불어 3대 웨이트 트레이닝 - 중량 운동중 하나이다. </p>
+                        </div>
+                        <div class="card-footer"><a class="btn btn-primary btn-sm" href="#!">More Info</a></div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-5">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h2 class="card-title">하체 운동의 핵심</h2>
+                            <p class="card-text">허벅지는 몸의 근욱 중 등을 제외하면 가장 크고 많은 근육을 가지고 있는 부위이고 스쿼트는 그 허벅지를 단련하는 운동이다.</p>
+                        </div>
+                        <div class="card-footer"><a class="btn btn-primary btn-sm" href="#!">More Info</a></div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-5">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h2 class="card-title">가성비 좋은 맨몸 운동</h2>
+                            <p class="card-text">아무 것도 없이 웅크려 앉을 공간만 있다면 별다른 비용없이 할 수 있는 운동이다..</p>
+                        </div>
+                        <div class="card-footer"><a class="btn btn-primary btn-sm" href="#!">More Info</a></div>
                     </div>
                 </div>
             </div>
-        </section>
-        <!-- Image element - set the background image for the header in the line below-->
-        <div class="py-5 bg-image-full" style="background-image: url('https://source.unsplash.com/4ulffa6qoKA/1200x800')">
-            <!-- Put anything you want here! The spacer below with inline CSS is just for demo purposes!-->
-            <div style="height: 20rem"></div>
+			<div id="disqus_thread"></div>
+<script>
+	/**
+	*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+	*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables    */
+	/*
+	var disqus_config = function () {
+	this.page.url = PAGE_URL;  // Replace PAGE_URL with your page's canonical URL variable
+	this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+	};
+	*/
+	(function() { // DON'T EDIT BELOW THIS LINE
+	var d = document, s = d.createElement('script');
+	s.src = 'https://signlanguagegarden.disqus.com/embed.js';
+	s.setAttribute('data-timestamp', +new Date());
+	(d.head || d.body).appendChild(s);
+	})();
+</script>
         </div>
-        <!-- Content section-->
-        <section class="py-5">
-            <div class="container my-5">
-                <div class="row justify-content-center">
-                    <div class="col-lg-6">
-                        <h2>Engaging Background Images</h2>
-                        <p class="lead">The background images used in this template are sourced from Unsplash and are open source and free to use.</p>
-                        <p class="mb-0">I can't tell you how many people say they were turned off from science because of a science teacher that completely sucked out all the inspiration and enthusiasm they had for the course.</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-		
         <!-- Footer-->
         <footer class="py-5 bg-dark">
-            <div class="container"><p class="m-0 text-center text-white">Copyright &copy; Your Website 2021</p></div>
+            <div class="container px-4 px-lg-5"><p class="m-0 text-center text-white">Copyright &copy; 정원임It's garden - 스쿼트 트레이너 2021</p></div>
         </footer>
         <!-- Bootstrap core JS-->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
