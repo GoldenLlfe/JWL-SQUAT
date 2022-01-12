@@ -189,8 +189,9 @@
     }
 	
 	function vidOff() {
-    webcam.pause();
-    webcam.srcObject  = "";
+	var canvas = document.getElementById('canvas');
+    canvas.pause();
+    canvas.srcObject  = "";
 	};
 </script>
             <!-- Call to Action-->
